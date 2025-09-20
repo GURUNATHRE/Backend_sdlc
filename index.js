@@ -1,43 +1,40 @@
-
-// to import express
+// Import express
 const express = require("express");
-// to import  info of .env
+// Import dotenv
 const dotenv = require('dotenv');
-// we can access info env
-
-
-
-
+// Import routes
 const vendorRoutes = require('./routes/VendorRoutes');
-// http request
 const firmRoutes = require('./routes/FirmRoutes');
-
-const productRoutes = require('./routes/Productroutes');
-const bodyParser = require('body-parser')
-const Path = require('path');
-
+const productRoutes = require('./routes/ProductRoutes'); // ✅ fixed capitalization
+const path = require('path');
+// MongoDB
+const mongoose = require('mongoose');
 
 dotenv.config();
-// to connect with database we use mangoose
-const mongoose = require('mongoose');
-// mongo mang0-rui in env to connect with the data base  
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('mongo ddb is connected '))
-    .catch((error) => console.log(error))
 
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB is connected'))
+    .catch((error) => console.error('MongoDB connection error:', error));
 
 const app = express();
 const port = process.env.PORT || 3000;
-app.use(express.json());
 
-app.use(bodyParser.json());
+// Middleware
+app.use(express.json()); // ✅ bodyParser.json() not needed
+app.use('/uploads', express.static('uploads'));
+
+// Routes
 app.use('/vendor', vendorRoutes);
-app.use('/product',productRoutes);
-app.use('/firm',firmRoutes);
-app.use('/uploads',express.static('uploads'));
+app.use('/product', productRoutes);
+app.use('/firm', firmRoutes);
+
+// Homepage route
+app.get('/', (req, res) => {
+    res.send("<h1>Welcome to Suby</h1>");
+});
+
+// Start server
 app.listen(port, () => {
-    console.log(`server started and running at port ${port}`)
-})
-app.use('/', (req, res) => {
-    res.send("<h1>welcome</h1>")
-})
+    console.log(`Server started and running at port ${port}`);
+});
