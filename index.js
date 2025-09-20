@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 // Import routes
 const vendorRoutes = require('./routes/VendorRoutes');
 const firmRoutes = require('./routes/FirmRoutes');
-const productRoutes = require('./routes/ProductRoutes'); // ✅ fixed capitalization
+const productRoutes = require('./routes/Productroutes'); // ✅ fixed capitalization
 const path = require('path');
 // MongoDB
 const mongoose = require('mongoose');
