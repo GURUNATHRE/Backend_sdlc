@@ -3,6 +3,7 @@ const express = require("express");
 // Import dotenv
 const dotenv = require('dotenv');
 // Import routes
+const cors = require("cors");
 const vendorRoutes = require('./routes/VendorRoutes');
 const firmRoutes = require('./routes/FirmRoutes');
 const productRoutes = require('./routes/Productroutes'); // ✅ fixed capitalization
@@ -21,6 +22,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors({
+  origin: "http://localhost:5173", // allow frontend
+  methods: ["GET", "POST", "PUT", "DELETE"], // allowed methods
+  credentials: true
+}));
+
 app.use(express.json()); // ✅ bodyParser.json() not needed
 app.use('/uploads', express.static('uploads'));
 
