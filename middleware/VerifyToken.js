@@ -3,35 +3,26 @@ const dotEnv = require('dotenv');
 const Vendor = require('../models/Vendor');
 
 dotEnv.config();
-const secretkey = process.env.whatis; // must exist in .env
+const secretkey = process.env.whatis;
 
-// middleware (req,res,next) 3 parameters
 const verifyToken = async (req, res, next) => {
-  // get token from headers
-  const token = req.headers.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Token is required' });
-  }
-
   try {
-    // verify token
-    const decodedCode = jwt.verify(token, secretkey);
+    const token = req.headers.authorization?.split(" ")[1]; // ✅ read Bearer token
+    if (!token) {
+      return res.status(401).json({ error: 'Token is required' });
+    }
 
-    // find vendor
-    const vendor = await Vendor.findById(decodedCode.vendorId);
+    const decoded = jwt.verify(token, secretkey);
+    const vendor = await Vendor.findById(decoded.vendorId);
 
     if (!vendor) {
       return res.status(401).json({ error: 'Vendor not found or token invalid' });
     }
 
-    // attach vendorId to request
-    req.vendorId = vendor._id;
-
-    // go to next middleware/route
+    req.vendorId = vendor._id; // attach vendorId to request
     next();
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(403).json({ error: 'Invalid or expired token' });
   }
 };
