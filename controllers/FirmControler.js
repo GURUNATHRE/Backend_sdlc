@@ -1,36 +1,33 @@
 const multer = require('multer');
-const path = require('path'); // ✅ forgot to import Path
+const path = require('path');
 const Firm = require('../models/Firm');
 const Vendor = require('../models/Vendor');
 
-// 1️⃣ Configure multer storage
+// Multer storage config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Make sure 'uploads' folder exists
+    cb(null, 'uploads/'); // Ensure 'uploads/' exists
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
-// 2️⃣ Create upload middleware
 const upload = multer({ storage: storage });
 
-// 3️⃣ Controller to add firm
+// Add Firm controller
 const addFirm = async (req, res) => {
   try {
-    const { firmName, area, category, region, offer } = req.body;
+    console.log("Vendor ID:", req.vendorId); // Debug
 
-    // file uploaded name
+    const { firmName, area, category, region, offer } = req.body;
     const image = req.file ? req.file.filename : undefined;
 
-    // verify vendor exists (assume req.vendorId is set from auth middleware)
     const vendor = await Vendor.findById(req.vendorId);
     if (!vendor) {
       return res.status(404).json({ message: 'Vendor not found' });
     }
 
-    // create firm document
     const firm = new Firm({
       firmName,
       area,
@@ -43,29 +40,27 @@ const addFirm = async (req, res) => {
 
     const savedFirm = await firm.save();
 
-    // add firm reference to vendor
+    // Add firm reference to vendor
+    if (!vendor.firm) vendor.firm = [];
     vendor.firm.push(savedFirm._id);
     await vendor.save();
 
-    return res.status(201).json({ message: 'Firm added successfully', firm: savedFirm });
+    res.status(201).json({ message: 'Firm added successfully', firm: savedFirm });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error', error });
+    console.error("Error in addFirm:", error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// 4️⃣ Controller to delete firm
+// Delete Firm controller
 const deleteFirmById = async (req, res) => {
   try {
     const { firmId } = req.params;
 
     const deletedFirm = await Firm.findByIdAndDelete(firmId);
+    if (!deletedFirm) return res.status(404).json({ error: 'Firm not found' });
 
-    if (!deletedFirm) {
-      return res.status(404).json({ error: 'Firm not found' });
-    }
-
-    // remove reference from vendor
+    // Remove firm reference from vendors
     await Vendor.updateMany(
       { firm: firmId },
       { $pull: { firm: firmId } }
@@ -73,13 +68,12 @@ const deleteFirmById = async (req, res) => {
 
     res.status(200).json({ message: 'Firm deleted successfully', firm: deletedFirm });
   } catch (error) {
-    console.log(error);
+    console.error("Error deleting firm:", error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-// 5️⃣ Export
 module.exports = {
-  addFirm: [upload.single('image'), addFirm],
+  addFirm: [upload.single('image'), addFirm], // multer middleware first
   deleteFirmById,
 };

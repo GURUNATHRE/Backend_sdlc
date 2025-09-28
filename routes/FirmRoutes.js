@@ -1,5 +1,4 @@
 const express = require('express');
-const firmController = require('../controllers/FirmControler')
 const verifyToken = require('../middleware/VerifyToken');
 const FirmControler = require('../controllers/FirmControler');
 // define router need to assign expressinside router
