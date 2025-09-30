@@ -1,20 +1,31 @@
 const express = require('express');
-const router = express.Router(); 
+const path = require('path'); // fixed
+const {
+  addProducts,
+  getproductbyFirm,
+  deletProductBYId,
+  getProductById,
+} = require('../controllers/productController');
 
-const ProductControler = require('../controllers/ProductControllers');
+const router = express.Router();
 
-router.post('/addProduct/:firmId', ProductControler.addProducts);
+// ➕ Add Product to Firm
+router.post('/add/:firmId', addProducts);
 
-router.get('/productbyId/:firmId',ProductControler.getproductbyFirm);
+// 📦 Get all products by Firm
+router.get('/byfirm/:firmId', getproductbyFirm);
 
-router.get('/uploads/:imageName',(req,res)=>{
-    const imageName = req.params.imageName;
+// 🔍 Get single product by ID
+router.get('/productbyId/:productId', getProductById);
 
-    res.headersSent('Content-Type','image.jpeg');
-    res.sendFile(Path.join(__dirname,'..','uploads',imageName));
+// 🗑 Delete Product by Id
+router.delete('/delete/:productId', deletProductBYId);
 
+// 🖼 Serve uploaded images
+router.get('/uploads/:imageName', (req, res) => {
+  const imageName = req.params.imageName;
+  res.setHeader('Content-Type', 'image/jpeg'); // fixed
+  res.sendFile(path.join(__dirname, '..', 'uploads', imageName));
 });
-
-router.delete('/:productId',ProductControler.deletProductBYId);
 
 module.exports = router;
