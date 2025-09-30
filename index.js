@@ -15,44 +15,51 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// CORS configuration
+// ✅ Allow both dev + production origins
+const allowedOrigins = [
+  "http://localhost:5173",        // local dev
+  "https://sdlc-btlh.onrender.com" // deployed frontend
+];
+
 const corsOptions = {
-  origin: "http://localhost:5173", // frontend URL
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS: " + origin));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "token"],
   credentials: true,
 };
 
+// ✅ Use cors middleware
 app.use(cors(corsOptions));
 
-// Handle preflight requests for all routes
+// ✅ Log request origins for debugging
 app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", corsOptions.origin);
-    res.header("Access-Control-Allow-Methods", corsOptions.methods.join(","));
-    res.header("Access-Control-Allow-Headers", corsOptions.allowedHeaders.join(","));
-    return res.sendStatus(200);
-  }
+  console.log(`Incoming request: ${req.method} ${req.originalUrl} | Origin: ${req.headers.origin || "no-origin"}`);
   next();
 });
 
-// Body parser
+// ✅ Body parser
 app.use(express.json());
 
-// Serve uploaded files
+// ✅ Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Routes
+// ✅ Routes
 app.use("/vendor", vendorRoutes);
 app.use("/firm", firmRoutes);
 // app.use("/product", productRoutes); // enable if you have products
 
-// Home route
+// ✅ Home route
 app.get("/", (req, res) => {
   res.send("<h1>Welcome to Suby Backend</h1>");
 });
 
-// MongoDB connection
+// ✅ MongoDB connection
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
   console.error("MONGO_URI is not defined in environment variables!");
@@ -63,7 +70,7 @@ if (!mongoUri) {
     .catch((err) => console.error("MongoDB connection error:", err));
 }
 
-// Start server
+// ✅ Start server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
