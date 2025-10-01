@@ -10,31 +10,42 @@ if (!secretKey) {
     throw new Error("JWT_SECRET is not defined in your environment variables!");
 }
 
-// REGISTER
+// REGISTER VENDOR
 const VendorRegister = async (req, res) => {
-    const { username, email, password } = req.body;
+    let { username, email, password } = req.body;
+
+    // Validate input
+    if (!username || !email || !password) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+    username = username.trim();
+    email = email.trim().toLowerCase();
 
     try {
-        // Check if username exists
+        // Check for existing username
         const vendorName = await Vendor.findOne({ username });
         if (vendorName) return res.status(400).json({ message: 'Username already taken' });
 
-        // Check if email exists
+        // Check for existing email
         const vendorEmail = await Vendor.findOne({ email });
         if (vendorEmail) return res.status(400).json({ message: 'Email already exists' });
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newVendor = new Vendor({
-            username,
-            email,
-            password: hashedPassword
-        });
-
+        // Create vendor
+        const newVendor = new Vendor({ username, email, password: hashedPassword });
         await newVendor.save();
 
-        res.status(201).json({ success: true, message: 'Vendor registered successfully', vendor: newVendor });
+        // Exclude password from response
+        const { password: pw, ...vendorData } = newVendor._doc;
+        res.status(201).json({
+            success: true,
+            message: 'Vendor registered successfully',
+            vendor: vendorData
+        });
+
         console.log('Vendor registered:', email);
     } catch (error) {
         console.error('Register error:', error.message);
@@ -42,9 +53,16 @@ const VendorRegister = async (req, res) => {
     }
 };
 
-// LOGIN
+// LOGIN VENDOR
 const vendorLogin = async (req, res) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    email = email.trim().toLowerCase();
 
     try {
         const vendor = await Vendor.findOne({ email });
@@ -53,13 +71,16 @@ const vendorLogin = async (req, res) => {
         const isMatch = await bcrypt.compare(password, vendor.password);
         if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
 
+        // Generate JWT token
         const token = jwt.sign({ vendorId: vendor._id }, secretKey, { expiresIn: '1h' });
 
+        // Exclude password from response
+        const { password: pw, ...vendorData } = vendor._doc;
         res.status(200).json({
             success: true,
             message: 'Login successful',
             token,
-            vendor
+            vendor: vendorData
         });
 
         console.log('Vendor logged in:', email);
@@ -95,4 +116,9 @@ const getoneVendor = async (req, res) => {
     }
 };
 
-module.exports = { VendorRegister, vendorLogin, getvendorsAll, getoneVendor };
+module.exports = {
+    VendorRegister,
+    vendorLogin,
+    getvendorsAll,
+    getoneVendor
+};

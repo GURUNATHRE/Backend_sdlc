@@ -3,30 +3,42 @@ const mongoose = require('mongoose');
 const firmSchema = new mongoose.Schema({
   firmName: {
     type: String,
-    required: true,
-    unique: true
+    required: [true, 'Firm name is required'],
+    unique: true,
+    trim: true,
+    maxlength: [100, 'Firm name cannot exceed 100 characters']
   },
   area: {
     type: String,
-    required: true,
+    required: [true, 'Area is required'],
+    trim: true
   },
   category: [
     {
       type: String,
-      enum: ['veg', 'non-veg'] // match Product model
+      enum: {
+        values: ['veg', 'non-veg'],
+        message: '{VALUE} is not a valid category'
+      }
     }
   ],
   region: [
     {
       type: String,
-      enum: ['south-india','north-india','chinese','Bakery']
+      enum: {
+        values: ['south-india', 'north-india', 'chinese', 'Bakery'],
+        message: '{VALUE} is not a valid region'
+      }
     }
   ],
   offer: {
-    type: String
+    type: String,
+    trim: true,
+    default: null
   },
   image: {
-    type: String
+    type: String,
+    default: null
   },
   vendor: [
     {
@@ -41,7 +53,9 @@ const firmSchema = new mongoose.Schema({
       ref: 'Product'
     }
   ]
-});
+}, { timestamps: true }); // adds createdAt and updatedAt automatically
 
-const Firm = mongoose.model('Firm', firmSchema);
+// Prevent OverwriteModelError in hot-reload environments
+const Firm = mongoose.models.Firm || mongoose.model('Firm', firmSchema);
+
 module.exports = Firm;

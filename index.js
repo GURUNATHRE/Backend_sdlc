@@ -7,6 +7,8 @@ const mongoose = require("mongoose");
 
 const vendorRoutes = require("./routes/VendorRoutes");
 const firmRoutes = require("./routes/FirmRoutes");
+const productRoutes = require('./routes/Productroutes');
+
 // const productRoutes = require('./routes/ProductRoutes'); // add if needed
 
 // Load environment variables
@@ -52,7 +54,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // ✅ Routes
 app.use("/vendor", vendorRoutes);
 app.use("/firm", firmRoutes);
-// app.use("/product", productRoutes); // enable if you have products
+app.use("/product", productRoutes); // enable if you have products
 
 // ✅ Home route
 app.get("/", (req, res) => {
