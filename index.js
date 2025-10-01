@@ -20,7 +20,7 @@ const port = process.env.PORT || 3000;
 // ✅ Allow both dev + production origins
 const allowedOrigins = [
   "http://localhost:5173",        // local dev
-  "https://sdlc-5psc.onrender.com/"
+  "https://sdlc-5psc.onrender.com"
 ];
 
 const corsOptions = {
