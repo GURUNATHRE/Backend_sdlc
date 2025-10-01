@@ -6,7 +6,7 @@ const FirmController = require('../controllers/FirmControler'); // Correct spell
 const router = express.Router();
 
 // Protected route to add a firm
-router.post('/add-firm', verifyToken, FirmController.addFirm);
+router.post('/add-firm/:id', verifyToken, FirmController.addFirm);
 
 // Serve uploaded images
 router.get('/uploads/:imageName', (req, res) => {

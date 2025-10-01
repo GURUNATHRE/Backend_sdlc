@@ -3,10 +3,10 @@ const path = require('path');
 const Firm = require('../models/Firm');
 const Vendor = require('../models/Vendor');
 
-// Multer storage configuration
+// ✅ Multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Make sure 'uploads/' exists
+    cb(null, 'uploads/'); // make sure 'uploads/' exists
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -15,44 +15,38 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Helper function to safely parse arrays
+// ✅ Helper to parse array fields
 const parseArrayField = (field) => {
   if (!field) return [];
-  if (Array.isArray(field)) return field; // already an array
+  if (Array.isArray(field)) return field;
   if (typeof field === 'string') {
     try {
       const parsed = JSON.parse(field);
-      if (Array.isArray(parsed)) return parsed; // JSON array
+      if (Array.isArray(parsed)) return parsed;
     } catch {
-      // fallback: comma-separated string
-      return field.split(',').map(item => item.trim());
+      return field.split(',').map((item) => item.trim());
     }
   }
   return [];
 };
 
-// ADD FIRM
+// ✅ Add a new firm
 const addFirm = async (req, res) => {
   try {
-    const vendorId = req.vendorId;
+    const vendorId = req.params.Id; // comes from verifyToken middleware
     if (!vendorId) {
       return res.status(401).json({ error: 'Unauthorized: Vendor ID missing' });
     }
 
-    // Extract fields
     let { firmName, area, category, region, offer } = req.body;
 
-    // Ensure category & region are arrays
     category = parseArrayField(category);
     region = parseArrayField(region);
-
     const image = req.file ? req.file.filename : undefined;
 
-    // Find vendor
     const vendor = await Vendor.findById(vendorId);
     if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
 
-    // Create firm
     const firm = new Firm({
       firmName,
       area,
@@ -60,38 +54,46 @@ const addFirm = async (req, res) => {
       region,
       offer,
       image,
-      vendor: vendor._id
+      vendor: vendor._id,
     });
 
     const savedFirm = await firm.save();
 
-    // Add firm reference to vendor
+    // Add reference to vendor
     vendor.firm = vendor.firm || [];
     vendor.firm.push(savedFirm._id);
     await vendor.save();
 
-    res.status(201).json({ success: true, message: 'Firm added successfully', firm: savedFirm });
+    res.status(201).json({
+      success: true,
+      message: 'Firm added successfully',
+      firm: savedFirm,
+    });
   } catch (error) {
     console.error('Error in addFirm:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 
-// DELETE FIRM
+// ✅ Delete a firm by ID (only removes from vendor who owns it)
 const deleteFirmById = async (req, res) => {
   try {
     const { firmId } = req.params;
+    const vendorId = req.vendorId;
 
-    const deletedFirm = await Firm.findByIdAndDelete(firmId);
-    if (!deletedFirm) return res.status(404).json({ error: 'Firm not found' });
+    if (!vendorId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // Remove firm reference from all vendors
-    await Vendor.updateMany(
-      { firm: firmId },
-      { $pull: { firm: firmId } }
-    );
+    const firm = await Firm.findById(firmId);
+    if (!firm) return res.status(404).json({ error: 'Firm not found' });
 
-    res.status(200).json({ success: true, message: 'Firm deleted successfully', firm: deletedFirm });
+    if (firm.vendor.toString() !== vendorId) {
+      return res.status(403).json({ error: 'Forbidden: You cannot delete this firm' });
+    }
+
+    await Firm.findByIdAndDelete(firmId);
+    await Vendor.findByIdAndUpdate(vendorId, { $pull: { firm: firmId } });
+
+    res.status(200).json({ success: true, message: 'Firm deleted successfully' });
   } catch (error) {
     console.error('Error deleting firm:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
@@ -99,6 +101,6 @@ const deleteFirmById = async (req, res) => {
 };
 
 module.exports = {
-  addFirm: [upload.single('image'), addFirm],
+  addFirm: [upload.single('image'), addFirm], // multer middleware included
   deleteFirmById,
 };
