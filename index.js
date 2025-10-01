@@ -15,12 +15,11 @@ const productRoutes = require('./routes/Productroutes');
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 // ✅ Allow both dev + production origins
 const allowedOrigins = [
   "http://localhost:5173",        // local dev
-  "https://sdlc-e0s2.onrender.com"
 ];
 
 const corsOptions = {

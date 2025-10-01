@@ -9,6 +9,7 @@ router.post('/login', VendorController.vendorLogin);
 
 // 📋 Get all vendors
 router.get('/allvendors', VendorController.getvendorsAll);
+// https://sdlc-btlh.onrender.com
 
 // 🔍 Get single vendor by ID
 router.get('/oneVendor/:id', VendorController.getoneVendor);
